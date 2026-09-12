@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+:root {
+  --ncc-green: #2c5530;
+  --ncc-green-light: #3d7041;
+  --ncc-green-dark: #1b381e;
+  --ncc-accent: #d4af37; /* Gold accent */
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background-color: #f9fafb; /* gray-50 */
+  color: #111827; /* gray-900 */
+}
