@@ -11,10 +11,23 @@ connectDB();
 
 const app = express();
 
-// Middleware
+// Middleware - handle CORS
+const allowedOrigin = 'https://lmec-ncc-attendance.vercel.app';
+
+// Handle preflight OPTIONS requests first
+app.options('*', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(200);
+});
+
 app.use(cors({
-  origin: 'https://lmec-ncc-attendance.vercel.app',
-  credentials: true
+  origin: allowedOrigin,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
 
