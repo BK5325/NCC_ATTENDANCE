@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import {
@@ -6,13 +6,16 @@ import {
   CheckCircle,
   AlertCircle,
   User,
-  Lock,
   Eye,
   EyeOff,
   Building2,
+  Save,
 } from 'lucide-react';
 
-/* ─── Reusable field ─────────────────────────────────────────────────── */
+/* ─── Shared styles ──────────────────────────────────────────────────── */
+const inputClass =
+  'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2c5530] focus:border-transparent transition-all bg-white';
+
 const Field = ({ label, children }) => (
   <div>
     <label className="block text-sm font-semibold text-gray-700 mb-1">{label}</label>
@@ -20,80 +23,95 @@ const Field = ({ label, children }) => (
   </div>
 );
 
-const inputClass =
-  'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-[#2c5530] focus:border-transparent transition-all';
-
 /* ─── Toast ──────────────────────────────────────────────────────────── */
-const Toast = ({ type, msg }) => {
+const Toast = ({ type, msg, onDismiss }) => {
   if (!msg) return null;
   const ok = type === 'success';
   return (
     <div
       className={`flex items-center gap-2 rounded-lg p-3 text-sm mb-4 ${
-        ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+        ok ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'
       }`}
     >
-      {ok ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
-      {msg}
+      {ok ? <CheckCircle size={15} className="shrink-0" /> : <AlertCircle size={15} className="shrink-0" />}
+      <span className="flex-1">{msg}</span>
+      {onDismiss && (
+        <button onClick={onDismiss} className="ml-auto text-current opacity-60 hover:opacity-100 text-xs font-bold">✕</button>
+      )}
     </div>
   );
 };
 
-/* ═══════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════
    MY PROFILE SECTION
-══════════════════════════════════════════════════════════════════════ */
+════════════════════════════════════════════════════════════════════════ */
 const ProfileSection = () => {
   const { user, updateUser } = useContext(AuthContext);
-  const [form, setForm] = useState({ name: '', email: '', username: '', password: '', confirmPassword: '' });
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  // Track whether user has deliberately typed a password
+  const [passwordTouched, setPasswordTouched] = useState(false);
 
-  // Prefill from current user
+  // Populate fields from context whenever user changes
   useEffect(() => {
     if (user) {
-      setForm((f) => ({
-        ...f,
-        name: user.name || '',
-        email: user.email || '',
-        username: user.username || '',
-        password: '',
-        confirmPassword: '',
-      }));
+      setName(user.name || '');
+      setEmail(user.email || '');
+      setUsername(user.username || '');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordTouched(false);
     }
   }, [user]);
 
   const handleSave = async (e) => {
     e.preventDefault();
-    setSuccess(''); setError('');
+    setSuccess('');
+    setError('');
 
-    if (!form.name.trim() || !form.email.trim() || !form.username.trim()) {
-      setError('Name, Email and Username are required.'); return;
+    // Basic validations
+    if (!name.trim()) { setError('Full name is required.'); return; }
+    if (!email.trim()) { setError('Email address is required.'); return; }
+    if (!username.trim()) { setError('Username is required.'); return; }
+    if (passwordTouched && newPassword && newPassword !== confirmPassword) {
+      setError('New passwords do not match.'); return;
     }
-    if (form.password && form.password !== form.confirmPassword) {
-      setError('Passwords do not match.'); return;
+    if (passwordTouched && newPassword && newPassword.length < 6) {
+      setError('Password must be at least 6 characters.'); return;
     }
 
     setSaving(true);
     try {
       const payload = {
-        name: form.name,
-        email: form.email,
-        username: form.username,
+        name: name.trim(),
+        email: email.trim(),
+        username: username.trim(),
       };
-      if (form.password.trim()) payload.password = form.password;
+      // Only include password if user deliberately typed one
+      if (passwordTouched && newPassword.trim()) {
+        payload.password = newPassword.trim();
+      }
 
       const { data } = await axios.put('/api/auth/profile', payload, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
 
-      // Keep token if API returns a new one
+      // Update context + localStorage — preserve old token if API doesn't return a new one
       updateUser({ ...data, token: data.token || user.token });
       setSuccess('Profile updated successfully!');
-      setForm((f) => ({ ...f, password: '', confirmPassword: '' }));
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordTouched(false);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update profile.');
+      setError(err.response?.data?.message || 'Failed to update profile. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -101,34 +119,41 @@ const ProfileSection = () => {
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="w-9 h-9 rounded-full bg-[#2c5530] text-white flex items-center justify-center font-bold text-base uppercase">
-          {user?.name?.[0] || 'U'}
+      {/* Avatar + name row */}
+      <div className="flex items-center gap-3 mb-6 pb-5 border-b border-gray-100">
+        <div className="w-12 h-12 rounded-full bg-[#2c5530] text-white flex items-center justify-center font-bold text-lg uppercase select-none">
+          {name?.[0] || user?.name?.[0] || 'U'}
         </div>
         <div>
-          <p className="text-sm font-bold text-gray-900">{user?.name}</p>
-          <p className="text-xs text-gray-400 capitalize">{user?.role}</p>
+          <p className="text-base font-bold text-gray-900">{user?.name}</p>
+          <p className="text-xs text-gray-400 capitalize font-medium">{user?.role} • {user?.username}</p>
         </div>
       </div>
 
-      <Toast type="success" msg={success} />
-      <Toast type="error" msg={error} />
+      <Toast type="success" msg={success} onDismiss={() => setSuccess('')} />
+      <Toast type="error" msg={error} onDismiss={() => setError('')} />
 
-      <form onSubmit={handleSave} className="space-y-4">
+      <form onSubmit={handleSave} className="space-y-4" autoComplete="off">
+        {/* Hidden dummy fields to fool browser autofill */}
+        <input type="text" name="fake_username" autoComplete="username" style={{ display: 'none' }} readOnly />
+        <input type="password" name="fake_password" autoComplete="new-password" style={{ display: 'none' }} readOnly />
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Full Name *">
             <input
+              autoComplete="name"
               className={inputClass}
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              value={name}
+              onChange={e => setName(e.target.value)}
               placeholder="Full Name"
             />
           </Field>
           <Field label="Username *">
             <input
+              autoComplete="off"
               className={inputClass}
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              value={username}
+              onChange={e => setUsername(e.target.value)}
               placeholder="username"
             />
           </Field>
@@ -137,54 +162,65 @@ const ProfileSection = () => {
         <Field label="Email Address *">
           <input
             type="email"
+            autoComplete="email"
             className={inputClass}
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            value={email}
+            onChange={e => setEmail(e.target.value)}
             placeholder="email@example.com"
           />
         </Field>
 
-        <div className="border-t border-gray-100 pt-4">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
-            Change Password (leave blank to keep current)
+        {/* Password section — separate from above so autofill doesn't cross-contaminate */}
+        <div className="rounded-lg border border-dashed border-gray-200 p-4 mt-2">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            🔒 Change Password — leave both fields blank to keep current password
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="New Password">
               <div className="relative">
                 <input
                   type={showPass ? 'text' : 'password'}
+                  autoComplete="new-password"
                   className={inputClass + ' pr-10'}
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="••••••••"
+                  value={newPassword}
+                  onChange={e => { setNewPassword(e.target.value); setPasswordTouched(true); }}
+                  placeholder="Min 6 characters"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPass(!showPass)}
+                  onClick={() => setShowPass(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
             </Field>
-            <Field label="Confirm Password">
+            <Field label="Confirm New Password">
               <input
                 type={showPass ? 'text' : 'password'}
+                autoComplete="new-password"
                 className={inputClass}
-                value={form.confirmPassword}
-                onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={e => { setConfirmPassword(e.target.value); setPasswordTouched(true); }}
+                placeholder="Repeat new password"
               />
             </Field>
           </div>
+          {/* Live match indicator */}
+          {passwordTouched && newPassword && confirmPassword && (
+            <p className={`text-xs mt-2 font-medium ${newPassword === confirmPassword ? 'text-green-600' : 'text-red-500'}`}>
+              {newPassword === confirmPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
+            </p>
+          )}
         </div>
 
         <div className="pt-2">
           <button
             type="submit"
             disabled={saving}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#2c5530] hover:bg-[#1b381e] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#2c5530] hover:bg-[#1b381e] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60 shadow-sm"
           >
+            <Save size={15} />
             {saving ? 'Saving...' : 'Save Profile'}
           </button>
         </div>
@@ -193,13 +229,16 @@ const ProfileSection = () => {
   );
 };
 
-/* ═══════════════════════════════════════════════════════════════════════
-   SYSTEM SETTINGS SECTION
-══════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════
+   SYSTEM SETTINGS SECTION (Admin only)
+════════════════════════════════════════════════════════════════════════ */
 const SystemSettingsSection = () => {
   const { user } = useContext(AuthContext);
   const [form, setForm] = useState({
-    institutionName: '', nccUnit: '', academicYear: '', attendanceThreshold: 75,
+    institutionName: '',
+    nccUnit: '',
+    academicYear: '',
+    attendanceThreshold: 75,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -216,10 +255,10 @@ const SystemSettingsSection = () => {
           institutionName: data.institutionName || '',
           nccUnit: data.nccUnit || '',
           academicYear: data.academicYear || '',
-          attendanceThreshold: data.attendanceThreshold || 75,
+          attendanceThreshold: data.attendanceThreshold ?? 75,
         });
-      } catch {
-        setError('Failed to load settings.');
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to load settings. Please refresh.');
       } finally {
         setLoading(false);
       }
@@ -229,71 +268,81 @@ const SystemSettingsSection = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    setSaving(true); setSuccess(''); setError('');
+    setSaving(true);
+    setSuccess('');
+    setError('');
     try {
       await axios.put('/api/settings', form, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      setSuccess('Settings saved successfully!');
-    } catch {
-      setError('Failed to save settings.');
+      setSuccess('System settings saved successfully!');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to save settings. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
   const fields = [
-    { key: 'institutionName', label: 'Institution / College Name', placeholder: 'ABC College', type: 'text' },
-    { key: 'nccUnit', label: 'NCC Unit Name', placeholder: 'Army Wing', type: 'text' },
-    { key: 'academicYear', label: 'Academic Year', placeholder: '2026-27', type: 'text' },
+    { key: 'institutionName', label: 'Institution / College Name', placeholder: 'e.g. ABC Engineering College', type: 'text' },
+    { key: 'nccUnit', label: 'NCC Unit Name', placeholder: 'e.g. 1 TN Battalion NCC', type: 'text' },
+    { key: 'academicYear', label: 'Academic Year', placeholder: 'e.g. 2026-27', type: 'text' },
     { key: 'attendanceThreshold', label: 'Low Attendance Threshold (%)', placeholder: '75', type: 'number' },
   ];
 
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-10 text-center">
+        <div className="animate-spin w-6 h-6 border-2 border-[#2c5530] border-t-transparent rounded-full mx-auto mb-3" />
+        <p className="text-gray-400 text-sm">Loading settings...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      {loading ? (
-        <div className="py-10 text-center text-gray-400">Loading settings...</div>
-      ) : (
-        <form onSubmit={handleSave} className="space-y-5">
-          <Toast type="success" msg={success} />
-          <Toast type="error" msg={error} />
+      <Toast type="success" msg={success} onDismiss={() => setSuccess('')} />
+      <Toast type="error" msg={error} onDismiss={() => setError('')} />
 
-          {fields.map((f) => (
-            <div key={f.key}>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">{f.label}</label>
-              <input
-                type={f.type}
-                value={form[f.key]}
-                onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-                placeholder={f.placeholder}
-                className={inputClass}
-              />
-              {f.key === 'attendanceThreshold' && (
-                <p className="text-xs text-gray-400 mt-1">
-                  Cadets below this percentage will be flagged as "Low Attendance".
-                </p>
-              )}
-            </div>
-          ))}
-
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex items-center gap-2 px-6 py-2.5 bg-[#2c5530] hover:bg-[#1b381e] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
-            >
-              {saving ? 'Saving...' : 'Save Settings'}
-            </button>
+      <form onSubmit={handleSave} className="space-y-5">
+        {fields.map(f => (
+          <div key={f.key}>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">{f.label}</label>
+            <input
+              type={f.type}
+              value={form[f.key]}
+              min={f.type === 'number' ? 0 : undefined}
+              max={f.type === 'number' ? 100 : undefined}
+              onChange={e => setForm({ ...form, [f.key]: e.target.value })}
+              placeholder={f.placeholder}
+              className={inputClass}
+            />
+            {f.key === 'attendanceThreshold' && (
+              <p className="text-xs text-gray-400 mt-1">
+                Cadets below this percentage will be flagged as "Low Attendance".
+              </p>
+            )}
           </div>
-        </form>
-      )}
+        ))}
+
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#2c5530] hover:bg-[#1b381e] text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60 shadow-sm"
+          >
+            <Save size={15} />
+            {saving ? 'Saving...' : 'Save Settings'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
 
-/* ═══════════════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════
    MAIN SETTINGS PAGE
-══════════════════════════════════════════════════════════════════════ */
+════════════════════════════════════════════════════════════════════════ */
 const Settings = () => {
   const { user } = useContext(AuthContext);
   const isAdmin = user?.role === 'admin';
@@ -308,7 +357,7 @@ const Settings = () => {
     <div className="p-6 max-w-3xl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-[#2c5530] text-white rounded-xl flex items-center justify-center">
+        <div className="w-10 h-10 bg-[#2c5530] text-white rounded-xl flex items-center justify-center shadow-sm">
           <SettingsIcon size={20} />
         </div>
         <div>
@@ -317,13 +366,13 @@ const Settings = () => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
-        {tabs.map((t) => (
+      {/* Tab switcher */}
+      <div className="flex gap-1 mb-6 bg-gray-100 rounded-xl p-1 w-fit">
+        {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
               tab === t.id
                 ? 'bg-white text-[#2c5530] shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
@@ -335,7 +384,7 @@ const Settings = () => {
         ))}
       </div>
 
-      {/* Content */}
+      {/* Tab content */}
       {tab === 'profile' && <ProfileSection />}
       {tab === 'system' && isAdmin && <SystemSettingsSection />}
     </div>
