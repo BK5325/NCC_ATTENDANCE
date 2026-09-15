@@ -35,7 +35,6 @@ function App() {
             <Route element={<DashboardLayout />}>
               <Route path="/admin" element={<StaffDashboard />} />
               <Route path="/users" element={<UserManagement />} />
-              <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>
 
@@ -57,6 +56,13 @@ function App() {
             <Route element={<DashboardLayout />}>
               <Route path="/cadet" element={<CadetDashboard />} />
               <Route path="/cadet/attendance" element={<MyAttendance />} />
+            </Route>
+          </Route>
+
+          {/* Settings — accessible by ALL authenticated roles */}
+          <Route element={<ProtectedRoute allowedRoles={['admin', 'staff', 'user']} />}>
+            <Route element={<DashboardLayout />}>
+              <Route path="/settings" element={<Settings />} />
             </Route>
           </Route>
         </Routes>
