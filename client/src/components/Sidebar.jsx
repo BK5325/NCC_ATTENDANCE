@@ -32,16 +32,17 @@ const Sidebar = () => {
     { to: '/attendance/records', icon: <ClipboardList size={18} />, label: 'Attendance Records' },
     { to: '/reports', icon: <FileText size={18} />, label: 'Reports' },
     { to: '/analytics', icon: <BarChart3 size={18} />, label: 'Analytics' },
+    { to: '/settings', icon: <Settings size={18} />, label: 'Settings' },
   ];
 
   const adminOnlyLinks = [
     { to: '/users', icon: <UserCheck size={18} />, label: 'User Management' },
-    { to: '/settings', icon: <Settings size={18} />, label: 'Settings' },
   ];
 
   const cadetLinks = [
     { to: '/cadet', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
     { to: '/cadet/attendance', icon: <ClipboardList size={18} />, label: 'My Attendance' },
+    { to: '/settings', icon: <Settings size={18} />, label: 'Settings' },
   ];
 
   const links = user?.role === 'user' ? cadetLinks : staffAdminLinks;
