@@ -23,7 +23,6 @@ export const AuthProvider = ({ children }) => {
         },
       };
 
-      // In production, use environment variable for API URL
       const { data } = await axios.post('/api/auth/login', { email, password }, config);
 
       setUser(data);
@@ -44,8 +43,15 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  // Call this after a successful profile update to keep localStorage in sync
+  const updateUser = (updatedData) => {
+    const merged = { ...user, ...updatedData };
+    setUser(merged);
+    localStorage.setItem('userInfo', JSON.stringify(merged));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
