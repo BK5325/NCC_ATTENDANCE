@@ -7,6 +7,7 @@ const {
   updateUserStatus,
   deleteUser
 } = require('../controllers/userController');
+const { updateUserProfile } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 router.route('/')
@@ -21,5 +22,9 @@ router.route('/:id/role')
 
 router.route('/:id/status')
   .put(protect, admin, updateUserStatus);
+
+// Admin can update any user's name, email, username, password
+router.route('/:id/profile')
+  .put(protect, admin, updateUserProfile);
 
 module.exports = router;
