@@ -56,6 +56,7 @@ const updateUserRole = async (req, res) => {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
+    console.error('Error in updateUserRole:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -87,6 +88,7 @@ const updateUserStatus = async (req, res) => {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
+    console.error('Error in updateUserStatus:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
