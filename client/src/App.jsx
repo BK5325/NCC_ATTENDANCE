@@ -12,6 +12,8 @@ import AddCadet from './pages/AddCadet';
 import MarkAttendance from './pages/MarkAttendance';
 import AttendanceRecords from './pages/AttendanceRecords';
 import UserManagement from './pages/UserManagement';
+import UniformPayments from './pages/UniformPayments';
+import Refreshments from './pages/Refreshments';
 
 import Reports from './pages/Reports';
 import Analytics from './pages/Analytics';
@@ -48,6 +50,8 @@ function App() {
               <Route path="/attendance/records" element={<AttendanceRecords />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/analytics" element={<Analytics />} />
+              <Route path="/uniform-payments" element={<UniformPayments />} />
+              <Route path="/refreshments" element={<Refreshments />} />
             </Route>
           </Route>
 
