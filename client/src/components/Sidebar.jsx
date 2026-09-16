@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import {
   LayoutDashboard, Users, UserPlus, ClipboardList, BarChart3,
   FileText, Settings, LogOut, Menu, X, Shield, ChevronRight,
-  CheckSquare, UserCheck
+  CheckSquare, UserCheck, Shirt, Coffee
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -32,6 +32,8 @@ const Sidebar = () => {
     { to: '/attendance/records', icon: <ClipboardList size={18} />, label: 'Attendance Records' },
     { to: '/reports', icon: <FileText size={18} />, label: 'Reports' },
     { to: '/analytics', icon: <BarChart3 size={18} />, label: 'Analytics' },
+    { to: '/uniform-payments', icon: <Shirt size={18} />, label: 'Uniform Payments' },
+    { to: '/refreshments', icon: <Coffee size={18} />, label: 'Refreshments' },
     { to: '/settings', icon: <Settings size={18} />, label: 'Settings' },
   ];
 
