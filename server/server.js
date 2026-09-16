@@ -42,6 +42,8 @@ app.use('/api/cadets', require('./routes/cadetRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/settings', require('./routes/settingsRoutes'));
+app.use('/api/uniform-payments', require('./routes/uniformRoutes'));
+app.use('/api/refreshments', require('./routes/refreshmentRoutes'));
 
 const PORT = process.env.PORT || 5000;
 
