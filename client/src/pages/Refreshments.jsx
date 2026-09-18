@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
-import { Coffee, Plus, Trash2, IndianRupee } from 'lucide-react';
+import { Coffee, Plus, Trash2, IndianRupee, Pencil } from 'lucide-react';
 
 const Refreshments = () => {
   const { user } = useContext(AuthContext);
@@ -9,6 +9,7 @@ const Refreshments = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [editRecord, setEditRecord] = useState(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -57,6 +58,19 @@ const Refreshments = () => {
       setDeleteId(null);
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to delete.');
+    }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const { data } = await axios.put(`/api/refreshments/${editRecord._id}`, editRecord, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      setRefreshments(refreshments.map(r => r._id === editRecord._id ? data : r));
+      setEditRecord(null);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update refreshment.');
     }
   };
 
@@ -110,9 +124,14 @@ const Refreshments = () => {
                   </td>
                   <td className="px-4 py-3 text-gray-500">{r.createdBy?.name || 'Unknown'}</td>
                   <td className="px-4 py-3">
-                    <button onClick={() => setDeleteId(r._id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                      <Trash2 size={15} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setEditRecord({...r, date: r.date.split('T')[0]})} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
+                        <Pencil size={15} />
+                      </button>
+                      <button onClick={() => setDeleteId(r._id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -181,6 +200,74 @@ const Refreshments = () => {
                   Save Record
                 </button>
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2 border border-gray-300 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editRecord && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-md shadow-xl overflow-hidden">
+            <div className="p-5 border-b border-gray-100">
+              <h3 className="font-bold text-lg text-gray-900">Edit Refreshment Record</h3>
+            </div>
+            <form onSubmit={handleEditSubmit} className="p-5 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Refreshment Name</label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g., Samosa and Tea"
+                  value={editRecord.name}
+                  onChange={(e) => setEditRecord({...editRecord, name: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#2c5530]"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    placeholder="1"
+                    value={editRecord.quantity}
+                    onChange={(e) => setEditRecord({...editRecord, quantity: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#2c5530]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Total Price (₹)</label>
+                  <input
+                    required
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={editRecord.price}
+                    onChange={(e) => setEditRecord({...editRecord, price: e.target.value})}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#2c5530]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <input
+                  required
+                  type="date"
+                  value={editRecord.date}
+                  onChange={(e) => setEditRecord({...editRecord, date: e.target.value})}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#2c5530]"
+                />
+              </div>
+              <div className="pt-4 flex gap-3">
+                <button type="submit" className="flex-1 py-2 bg-[#2c5530] text-white text-sm font-semibold rounded-lg hover:bg-[#1b381e]">
+                  Save Changes
+                </button>
+                <button type="button" onClick={() => setEditRecord(null)} className="flex-1 py-2 border border-gray-300 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50">
                   Cancel
                 </button>
               </div>

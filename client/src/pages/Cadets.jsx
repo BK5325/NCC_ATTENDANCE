@@ -20,6 +20,7 @@ const Cadets = () => {
   const [search, setSearch] = useState('');
   const [yearFilter, setYearFilter] = useState('All Years');
   const [deleteId, setDeleteId] = useState(null);
+  const [editCadet, setEditCadet] = useState(null);
 
   const fetchCadets = async () => {
     setLoading(true);
@@ -55,6 +56,19 @@ const Cadets = () => {
       setDeleteId(null);
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to delete.');
+    }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`/api/cadets/${editCadet._id}`, editCadet, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      setEditCadet(null);
+      fetchCadets();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update cadet.');
     }
   };
 
@@ -141,9 +155,14 @@ const Cadets = () => {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       {user?.role === 'admin' && (
-                        <button onClick={() => setDeleteId(c._id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
-                          <Trash2 size={15} />
-                        </button>
+                        <>
+                          <button onClick={() => setEditCadet(c)} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Edit">
+                            <Pencil size={15} />
+                          </button>
+                          <button onClick={() => setDeleteId(c._id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                            <Trash2 size={15} />
+                          </button>
+                        </>
                       )}
                     </div>
                   </td>
@@ -153,6 +172,43 @@ const Cadets = () => {
           </table>
         </div>
       </div>
+
+      {/* Edit Cadet Modal */}
+      {editCadet && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-xl">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Edit Cadet</h3>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Registration Number</label>
+                <input required type="text" value={editCadet.regNo} onChange={e => setEditCadet({...editCadet, regNo: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#2c5530]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input required type="text" value={editCadet.name} onChange={e => setEditCadet({...editCadet, name: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#2c5530]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">NCC Year</label>
+                <select value={editCadet.year} onChange={e => setEditCadet({...editCadet, year: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#2c5530] bg-white">
+                  {NCC_YEARS.filter(y => y !== 'All Years').map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" value={editCadet.email || ''} onChange={e => setEditCadet({...editCadet, email: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#2c5530]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input type="text" value={editCadet.phone || ''} onChange={e => setEditCadet({...editCadet, phone: e.target.value})} className="w-full px-3 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-[#2c5530]" />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="submit" className="flex-1 py-2 bg-[#2c5530] text-white font-semibold rounded-lg hover:bg-[#1b381e]">Save Changes</button>
+                <button type="button" onClick={() => setEditCadet(null)} className="flex-1 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteId && (
