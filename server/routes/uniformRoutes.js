@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { 
   getPayments, 
-  addPayment, 
+  addPayment,
+  updatePayment,
   deletePayment 
 } = require('../controllers/uniformController');
 const { protect } = require('../middleware/authMiddleware');
@@ -12,6 +13,7 @@ router.route('/')
   .post(protect, addPayment);
 
 router.route('/:id')
+  .put(protect, updatePayment)
   .delete(protect, deletePayment);
 
 module.exports = router;

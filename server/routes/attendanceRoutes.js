@@ -4,13 +4,19 @@ const {
   markAttendance, 
   getAttendance, 
   getCadetAttendance, 
-  getCadetAttendanceSummary 
+  getCadetAttendanceSummary,
+  updateAttendance,
+  deleteAttendance
 } = require('../controllers/attendanceController');
 const { protect, staffOrAdmin } = require('../middleware/authMiddleware');
 
 router.route('/')
   .post(protect, staffOrAdmin, markAttendance)
   .get(protect, staffOrAdmin, getAttendance);
+
+router.route('/:id')
+  .put(protect, staffOrAdmin, updateAttendance)
+  .delete(protect, staffOrAdmin, deleteAttendance);
 
 router.route('/cadet/:cadetId')
   .get(protect, getCadetAttendance);
