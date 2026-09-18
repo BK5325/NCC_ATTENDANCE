@@ -55,6 +55,39 @@ const addPayment = async (req, res) => {
   }
 };
 
+// @desc    Update a uniform payment
+// @route   PUT /api/uniform-payments/:id
+// @access  Private (Admin/Staff)
+const updatePayment = async (req, res) => {
+  try {
+    const payment = await UniformPayment.findById(req.params.id);
+
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment record not found' });
+    }
+
+    if (req.user.role !== 'admin' && payment.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to update this record' });
+    }
+
+    payment.cadet = req.body.cadetId || payment.cadet;
+    payment.item = req.body.item || payment.item;
+    payment.amount = req.body.amount || payment.amount;
+    payment.date = req.body.date || payment.date;
+
+    const savedPayment = await payment.save();
+    
+    const populatedPayment = await UniformPayment.findById(savedPayment._id)
+      .populate('cadet', 'regNo name year')
+      .populate('createdBy', 'name');
+
+    res.json(populatedPayment);
+  } catch (error) {
+    console.error('Error updating uniform payment:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // @desc    Delete a uniform payment
 // @route   DELETE /api/uniform-payments/:id
 // @access  Private (Admin/Staff)
@@ -82,5 +115,6 @@ const deletePayment = async (req, res) => {
 module.exports = {
   getPayments,
   addPayment,
+  updatePayment,
   deletePayment
 };

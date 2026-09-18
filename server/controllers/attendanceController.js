@@ -109,9 +109,45 @@ const getCadetAttendanceSummary = async (req, res) => {
   }
 };
 
+const updateAttendance = async (req, res) => {
+  try {
+    const attendance = await Attendance.findById(req.params.id);
+
+    if (attendance) {
+      attendance.status = req.body.status || attendance.status;
+      const updatedAttendance = await attendance.save();
+      res.json(updatedAttendance);
+    } else {
+      res.status(404).json({ message: 'Attendance record not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Server error while updating attendance' });
+  }
+};
+
+// @desc    Delete attendance record
+// @route   DELETE /api/attendance/:id
+// @access  Private/Staff or Admin
+const deleteAttendance = async (req, res) => {
+  try {
+    const attendance = await Attendance.findById(req.params.id);
+
+    if (attendance) {
+      await Attendance.deleteOne({ _id: attendance._id });
+      res.json({ message: 'Attendance record removed' });
+    } else {
+      res.status(404).json({ message: 'Attendance record not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Server error while deleting attendance' });
+  }
+};
+
 module.exports = {
   markAttendance,
   getAttendance,
   getCadetAttendance,
-  getCadetAttendanceSummary
+  getCadetAttendanceSummary,
+  updateAttendance,
+  deleteAttendance
 };

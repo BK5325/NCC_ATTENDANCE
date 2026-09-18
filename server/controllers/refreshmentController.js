@@ -47,6 +47,38 @@ const addRefreshment = async (req, res) => {
   }
 };
 
+// @desc    Update a refreshment
+// @route   PUT /api/refreshments/:id
+// @access  Private (Admin/Staff)
+const updateRefreshment = async (req, res) => {
+  try {
+    const refreshment = await Refreshment.findById(req.params.id);
+
+    if (!refreshment) {
+      return res.status(404).json({ message: 'Refreshment record not found' });
+    }
+
+    if (req.user.role !== 'admin' && refreshment.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to update this record' });
+    }
+
+    refreshment.name = req.body.name || refreshment.name;
+    refreshment.quantity = req.body.quantity || refreshment.quantity;
+    refreshment.price = req.body.price || refreshment.price;
+    refreshment.date = req.body.date || refreshment.date;
+
+    const savedRefreshment = await refreshment.save();
+    
+    const populatedRefreshment = await Refreshment.findById(savedRefreshment._id)
+      .populate('createdBy', 'name');
+
+    res.json(populatedRefreshment);
+  } catch (error) {
+    console.error('Error updating refreshment:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // @desc    Delete a refreshment
 // @route   DELETE /api/refreshments/:id
 // @access  Private (Admin/Staff)
@@ -74,5 +106,6 @@ const deleteRefreshment = async (req, res) => {
 module.exports = {
   getRefreshments,
   addRefreshment,
+  updateRefreshment,
   deleteRefreshment
 };
