@@ -100,10 +100,11 @@ const getCadetAttendanceSummary = async (req, res) => {
     
     const total = records.length;
     const present = records.filter(r => r.status === 'Present').length;
-    const absent = total - present;
+    const od = records.filter(r => r.status === 'OD').length;
+    const absent = total - present - od;
     const percentage = total > 0 ? ((present / total) * 100).toFixed(2) : 0;
 
-    res.json({ total, present, absent, percentage });
+    res.json({ total, present, absent, od, percentage });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
