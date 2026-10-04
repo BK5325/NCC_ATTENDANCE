@@ -55,6 +55,7 @@ const MarkAttendance = () => {
 
   const presentCount = Object.values(attendance).filter(v => v === 'Present').length;
   const absentCount = Object.values(attendance).filter(v => v === 'Absent').length;
+  const odCount = Object.values(attendance).filter(v => v === 'OD').length;
 
   const handleSave = async () => {
     setSaving(true); setError(''); setSuccess('');
@@ -113,13 +114,14 @@ const MarkAttendance = () => {
       {cadets.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
           <div className="flex flex-wrap gap-3 items-center justify-between">
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button onClick={() => markAll('Present')} className="px-3 py-1.5 bg-green-100 text-green-700 text-sm font-semibold rounded-lg hover:bg-green-200 transition-colors">✓ Mark All Present</button>
               <button onClick={() => markAll('Absent')} className="px-3 py-1.5 bg-red-100 text-red-700 text-sm font-semibold rounded-lg hover:bg-red-200 transition-colors">✗ Mark All Absent</button>
             </div>
-            <div className="flex gap-4 text-sm font-medium">
+            <div className="flex gap-4 text-sm font-medium flex-wrap">
               <span className="text-green-600">Present: <strong>{presentCount}</strong></span>
               <span className="text-red-600">Absent: <strong>{absentCount}</strong></span>
+              <span className="text-blue-600">OD: <strong>{odCount}</strong></span>
             </div>
           </div>
         </div>
@@ -173,6 +175,10 @@ const MarkAttendance = () => {
                               onClick={() => toggle(c._id, 'Absent')}
                               className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${attendance[c._id] === 'Absent' ? 'bg-red-500 text-white shadow-md scale-105' : 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100'}`}
                             >Absent</button>
+                            <button
+                              onClick={() => toggle(c._id, 'OD')}
+                              className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${attendance[c._id] === 'OD' ? 'bg-blue-500 text-white shadow-md scale-105' : 'bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100'}`}
+                            >OD</button>
                           </div>
                         </div>
                       );
@@ -203,7 +209,7 @@ const MarkAttendance = () => {
             <p className="text-sm text-gray-500 mb-4">
               {new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} — {year}
             </p>
-            <div className="flex gap-4 mb-5">
+            <div className="flex gap-3 mb-5">
               <div className="flex-1 bg-green-50 rounded-lg p-3 text-center">
                 <p className="text-2xl font-bold text-green-600">{presentCount}</p>
                 <p className="text-xs text-green-500 font-medium">Present</p>
@@ -211,6 +217,10 @@ const MarkAttendance = () => {
               <div className="flex-1 bg-red-50 rounded-lg p-3 text-center">
                 <p className="text-2xl font-bold text-red-600">{absentCount}</p>
                 <p className="text-xs text-red-500 font-medium">Absent</p>
+              </div>
+              <div className="flex-1 bg-blue-50 rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-blue-600">{odCount}</p>
+                <p className="text-xs text-blue-500 font-medium">OD</p>
               </div>
             </div>
             <div className="flex gap-3">
