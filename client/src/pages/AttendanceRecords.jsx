@@ -119,7 +119,11 @@ const AttendanceRecords = () => {
                   <td className="px-4 py-3 font-medium text-gray-900">{r.cadetId?.name}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{r.cadetId?.year}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${r.status === 'Present' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                      r.status === 'Present' ? 'bg-green-100 text-green-700' :
+                      r.status === 'OD' ? 'bg-blue-100 text-blue-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
                       {r.status}
                     </span>
                   </td>
@@ -162,6 +166,7 @@ const AttendanceRecords = () => {
                 >
                   <option value="Present">Present</option>
                   <option value="Absent">Absent</option>
+                  <option value="OD">OD (On Duty)</option>
                 </select>
               </div>
               <div className="flex gap-3 pt-2">
